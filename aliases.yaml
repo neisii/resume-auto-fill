@@ -1,0 +1,246 @@
+# Field alias dictionary
+# Format: profile_field_key: [list of template label variants]
+# profile_field_key uses dotted-path notation matching the flattened profile structure
+
+# 매칭에서 완전히 제외할 라벨 목록 (오매핑 방지)
+_exclude:
+  - 지원일자       # resume_sample-8: basic.name에 85%로 오매핑
+  - 상세경력사항    # resume_sample-8: basic.career_year에 80%로 오매핑
+
+# ── basic ─────────────────────────────────────────────────────────────────────
+
+basic.name:
+  - 이름
+  - 성명
+  - 지원자명
+  - 지원자
+  - 성 명
+  - 이 름
+  - 성명(이름)
+  - 성    명        # sample-4, 8 자간 넓은 표기
+  - 성명 (한글)     # sample-5
+  - 성명 :          # sample-5
+
+basic.birth:
+  - 생년월일
+  - 생 년 월 일
+  - 출생년도
+  - 생년
+  - 생일
+
+basic.career_year:
+  - 경력
+  - 총경력
+  - 경력사항
+  - 총 경력
+  - 경 력
+  - 경력기간
+  - 총경력기간
+  - 총 경력 기간
+
+basic.email:
+  - E-Mail
+  - E-mail
+  - 이메일
+  - 전자우편
+
+basic.phone:
+  - 전화
+  - 전   화
+  - 연락처
+  - 개인 연락처
+  - 연 락 처
+  - 전화번호
+
+basic.address:
+  - 주소
+  - 주    소
+  - 현 주소
+  - 현주소
+
+basic.gender:
+  - 성별
+  - 성 별
+
+# ── skills ────────────────────────────────────────────────────────────────────
+
+skills:
+  - 기술스택
+  - 사용기술
+  - 보유기술
+  - 기술 스택
+  - 사용 기술
+  - 보 유 기 술
+  - 보유 기술
+  - 주요기술
+  - 기술및도구
+  - 기술 및 도구
+  - 주요기술스택
+  - 보유기술스택
+  - 기술/도구
+  - 특수기술
+
+# ── education ─────────────────────────────────────────────────────────────────
+
+education.0.school:
+  - 학교명
+  - 출신학교
+  - 대 학 교
+  - 대학교(원)
+  - 대    학
+  - 대학교
+
+education.0.major:
+  - 학과명
+  - 학과
+  - 전공
+
+education.0.degree:
+  - 학력
+  - 구분
+
+education.0.start:
+  - 입학
+  - 입학년월
+
+education.0.end:
+  - 졸업
+  - 졸업 년 월
+  - 졸업연월
+  - 졸업년월
+  - 과 졸업
+
+# ── certifications ────────────────────────────────────────────────────────────
+
+certifications.0.name:
+  - 자격증
+  - 자격증명
+  - 자 격 증 명
+  - 자격증 명
+
+certifications.0.issuer:
+  - 발행처
+  - 발급기관
+  - 발행처/발급기관
+
+certifications.0.date:
+  - 취득일
+  - 취득연월
+  - 취득일자
+  - 취득년월
+
+certifications.0.grade:
+  - 등급
+  - 등급/점수
+  - 등 급
+  - 점수/수준/등급
+
+# ── career ────────────────────────────────────────────────────────────────────
+
+career.0.company:
+  - 회사명
+  - 회  사  명
+  - 회 사 명
+  - 소속회사
+  - 근무회사
+
+career.0.department:
+  - 부서명
+  - 부서
+  - 부 서
+
+career.0.title:
+  - 직위
+  - 직    위
+  - 직  급
+  - 최종직위
+  - 직급
+
+career.0.period:
+  - 근무기간
+  - 재직기간
+  - 기 간 (개월)
+
+career.0.period.start:
+  - 입사일
+  - 입사년월
+
+career.0.period.end:
+  - 퇴사일
+  - 퇴사년월
+
+career.0.duties:
+  - 담 당 업 무    # sample-4 경력 테이블 (자간 넓은 표기)
+  - 업 무          # sample-3 경력 테이블
+
+# ── projects (index 0) ────────────────────────────────────────────────────────
+
+projects.0.name:
+  - 프로젝트명
+  - 프로젝트 명
+  - 과제명
+  - 사업명
+  - 프로젝트
+  - 프로젝트(사업)명
+  - 프로젝트명(업무명)
+  - 업무명
+
+projects.0.role:
+  - 담당역할
+  - 역할
+  - 포지션
+  - 직급/역할
+  - 직무/역할
+  - 역 할
+
+projects.0.description:
+  - 담당업무
+  - 수행업무
+  - 주요업무
+  - 업무내용
+  - 담당 업무
+  - 수행 업무
+  - 주요 업무
+  - 업무 내용
+  - 수행내용
+  - 업무설명
+  - 주요수행업무
+  - 프로젝트 상세설명   # sample-3: 오매핑 방지용 명시 추가
+
+projects.0.period:
+  - 수행기간
+  - 기간
+  - 프로젝트기간
+  - 사업기간
+  - 프로젝트 기간
+  - 기 간
+  - 참여기간
+
+projects.0.period.start:
+  - 시작일
+  - 시 작 일
+  - 착수일
+  - 시작
+
+projects.0.period.end:
+  - 종료일
+  - 종 료 일
+  - 완료일
+  - 종료
+
+# ── projects (index 1) ────────────────────────────────────────────────────────
+
+projects.1.name:
+  - 프로젝트명2
+  - 과제명2
+
+projects.1.role:
+  - 담당역할2
+
+projects.1.description:
+  - 담당업무2
+  - 수행업무2
+
+projects.1.period:
+  - 수행기간2
+  - 기간2

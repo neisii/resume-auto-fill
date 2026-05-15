@@ -1,0 +1,62 @@
+basic:
+  name: 홍길동
+  birth: 1990-01-01
+  career_year: 9년
+  gender: 남
+  email: hong@example.com
+  phone: 010-1234-5678
+  address: 서울특별시 강남구 테헤란로 123
+
+education:
+  - school: 한국대학교
+    major: 컴퓨터공학과
+    degree: 학사
+    start: 2006-03
+    end: 2012-02
+
+certifications:
+  - name: 정보처리기사
+    issuer: 한국산업인력공단
+    date: 2015-05
+    grade: 1급
+  - name: AWS Certified Developer
+    issuer: Amazon Web Services
+    date: 2022-09
+    grade: Associate
+
+career:
+  - company: ㈜이전회사
+    department: 개발팀
+    title: 과장
+    period:
+      start: 2018-01
+      end: 2021-02
+    duties: 백엔드 시스템 설계 및 개발, 팀 리딩
+
+skills:
+  - Java
+  - Spring Boot
+  - Kafka
+  - PostgreSQL
+  - Docker
+
+projects:
+  - name: 광고 플랫폼 개발
+    period:
+      start: 2021-03
+      end: 2023-08
+    role: 백엔드 개발
+    description:
+      - 실시간 트래픽 처리 시스템 설계 및 구현
+      - Kafka 기반 이벤트 처리 파이프라인 구축
+      - Spring Boot 마이크로서비스 아키텍처 적용
+
+  - name: 전자상거래 플랫폼 고도화
+    period:
+      start: 2019-06
+      end: 2021-02
+    role: 풀스택 개발
+    description:
+      - 상품 검색 및 추천 API 개발
+      - 결제 연동 모듈 구현
+      - 성능 최적화로 응답 속도 40% 개선

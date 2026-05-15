@@ -1,0 +1,34 @@
+# 가상환경
+.venv/
+
+# 샘플 템플릿 (개인정보 포함 가능)
+resume_sample.docx
+resume_sample-1.docx
+resume_sample-2.docx
+resume_sample-3.docx
+resume_sample-4.docx
+resume_sample-5.docx
+resume_sample-6.docx
+resume_sample-7.docx
+resume_sample-8.docx
+resume_sample-9.docx
+resume_sample-4.doc
+resume_sample-6.doc
+resume_sample-8.doc
+resume_sample-9.doc
+
+# 출력 파일
+filled_*.docx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# LibreOffice 잠금 파일
+.~lock.*#
+
+# macOS
+.DS_Store
