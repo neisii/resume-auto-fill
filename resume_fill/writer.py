@@ -12,13 +12,21 @@ from .formatter import format_value
 from .loader import flatten_profile
 from .matcher import FieldMatcher
 
-_PROJECT_RE = re.compile(r"^projects\.(\d+)\.")
+_INDEXED_KEY_RE = re.compile(r"^([a-z]+)\.(\d+)\.")
 
-# Horizontal table is only filled when these identifying project fields appear
-_IDENTIFYING_PROJECT_FIELDS = {
+# Horizontal table is only filled when at least one of these fields appears in col_map
+_IDENTIFYING_FIELDS = {
     "projects.0.name",
     "projects.0.role",
     "projects.0.description",
+    "career.0.company",
+    "career.0.duties",
+    "career.0.period",
+    "education.0.school",
+    "education.0.major",
+    "education.0.end",
+    "certifications.0.name",
+    "certifications.0.date",
 }
 
 
@@ -102,13 +110,12 @@ def _build_col_map(rows_cells: list[list[_Cell]], matcher: FieldMatcher) -> dict
 def _is_horizontal_table(rows_cells: list[list[_Cell]], col_map: dict[int, str]) -> bool:
     """
     Horizontal table: ≥ 3 distinct label columns in first 2 rows AND
-    at least one identifying project field AND at least one all-empty data row.
+    at least one identifying field AND at least one all-empty data row.
     """
     if len(col_map) < 3:
         return False
-    if not any(v in _IDENTIFYING_PROJECT_FIELDS for v in col_map.values()):
+    if not any(v in _IDENTIFYING_FIELDS for v in col_map.values()):
         return False
-    # Verify at least one completely empty data row exists (below row index 1)
     for row_cells in rows_cells[2:]:
         if _row_is_empty(row_cells):
             return True
@@ -131,11 +138,14 @@ def _fill_horizontal(
     flat: dict[str, Any],
     stats: dict,
 ) -> None:
-    max_projects = _project_count(flat)
-    project_idx = 0
+    section = _detect_section(col_map)
+    if not section:
+        return
+    max_entries = _section_count(flat, section)
+    entry_idx = 0
 
     for row_cells in data_rows:
-        if project_idx >= max_projects:
+        if entry_idx >= max_entries:
             break
         if not _row_is_empty(row_cells):
             continue
@@ -144,7 +154,12 @@ def _fill_horizontal(
             if c_idx >= len(row_cells):
                 continue
             cell = row_cells[c_idx]
-            eff_key = _reindex_project_key(base_key, project_idx)
+            eff_key = _reindex_key(base_key, entry_idx)
+            # Skip fields that belong to a different section than the detected table section
+            m = _INDEXED_KEY_RE.match(eff_key)
+            if m and m.group(1) != section:
+                stats["skipped"] += 1
+                continue
             value = flat.get(eff_key)
             if value is None:
                 stats["skipped"] += 1
@@ -154,19 +169,30 @@ def _fill_horizontal(
                 _set_cell_text(cell, formatted)
                 stats["filled"] += 1
 
-        project_idx += 1
+        entry_idx += 1
 
 
-def _reindex_project_key(key: str, idx: int) -> str:
-    return _PROJECT_RE.sub(f"projects.{idx}.", key)
+def _detect_section(col_map: dict[int, str]) -> str | None:
+    """Return the profile section name (e.g. 'career') from the first indexed field_key."""
+    for fk in col_map.values():
+        m = _INDEXED_KEY_RE.match(fk)
+        if m:
+            return m.group(1)
+    return None
 
 
-def _project_count(flat: dict) -> int:
+def _reindex_key(key: str, idx: int) -> str:
+    """Replace the numeric index in any section key: career.0.x → career.N.x"""
+    return _INDEXED_KEY_RE.sub(lambda m: f"{m.group(1)}.{idx}.", key)
+
+
+def _section_count(flat: dict, section: str) -> int:
+    """Count how many entries exist for a given section in the flat profile."""
     max_idx = -1
     for k in flat:
-        m = _PROJECT_RE.match(k)
-        if m:
-            max_idx = max(max_idx, int(m.group(1)))
+        m = _INDEXED_KEY_RE.match(k)
+        if m and m.group(1) == section:
+            max_idx = max(max_idx, int(m.group(2)))
     return max_idx + 1 if max_idx >= 0 else 0
 
 
