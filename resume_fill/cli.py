@@ -32,14 +32,14 @@ def main(
         raise typer.Exit(1)
 
     profile_data = load_profile(profile)
-    alias_data, exclude = load_aliases(aliases)
+    alias_data, exclude, overwrite = load_aliases(aliases)
     matcher = FieldMatcher(alias_data, fuzzy_threshold, exclude)
 
     if verbose:
-        typer.echo(f"Loaded {len(alias_data)} field aliases, {len(exclude)} excluded label(s)")
+        typer.echo(f"Loaded {len(alias_data)} field aliases, {len(exclude)} excluded, {len(overwrite)} overwriteable")
         typer.echo(f"Fuzzy threshold: {fuzzy_threshold}")
 
-    stats = fill_template(template, profile_data, matcher, output)
+    stats = fill_template(template, profile_data, matcher, output, overwrite)
 
     typer.echo(f"Filled {stats['filled']} field(s) → {output}")
     if stats["skipped"] and verbose:

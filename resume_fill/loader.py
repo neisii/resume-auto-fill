@@ -15,12 +15,13 @@ def load_profile(path: str | Path) -> dict:
     raise ValueError(f"Unsupported profile format: {path.suffix!r} (use .yaml, .yml, or .json)")
 
 
-def load_aliases(path: str | Path) -> tuple[dict[str, list[str]], set[str]]:
+def load_aliases(path: str | Path) -> tuple[dict[str, list[str]], set[str], set[str]]:
     path = Path(path)
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     exclude = set(data.pop("_exclude", []))
+    overwrite = set(data.pop("_overwrite", []))
     aliases = {k: [str(v) for v in vs] for k, vs in data.items()}
-    return aliases, exclude
+    return aliases, exclude, overwrite
 
 
 def flatten_profile(profile: dict) -> dict[str, Any]:

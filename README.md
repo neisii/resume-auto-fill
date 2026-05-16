@@ -43,7 +43,7 @@ resume-fill \
 | `--output` | `-o` | 필수 | 출력 파일 경로 |
 | `--aliases` | `-a` | `aliases.yaml` | 필드 별칭 사전 경로 |
 | `--fuzzy-threshold` | — | `75.0` | 퍼지 매칭 임계값 (0–100) |
-| `--verbose` | `-v` | — | 상세 출력 (로드된 alias 수, skip 수) |
+| `--verbose` | `-v` | — | 상세 출력 |
 
 ---
 
@@ -59,19 +59,22 @@ basic:
   gender: 남
   email: hong@example.com
   phone: 010-1234-5678
-  address: 서울특별시 강남구 테헤란로 123
+  address: 서울특별시 강남구
+  available_date: 즉시
+  rrn: 000000-0******
 
 education:
   - school: 한국대학교
-    major: 컴퓨터공학과
+    major: 컴퓨터공학부
     degree: 학사
+    location: 서울
     start: 2006-03
     end: 2012-02
 
 certifications:
   - name: 정보처리기사
     issuer: 한국산업인력공단
-    date: 2015-05
+    date: 2015-05-14
     grade: 1급
 
 career:
@@ -90,6 +93,8 @@ skills:
 
 projects:
   - name: 광고 플랫폼 개발
+    client: ㈜광고주
+    company: ㈜이전회사
     period:
       start: 2021-03
       end: 2023-08
@@ -97,11 +102,17 @@ projects:
     description:
       - 실시간 트래픽 처리 시스템 설계 및 구현
       - Kafka 기반 이벤트 처리 파이프라인 구축
+    environment:
+      os: Linux
+      language: Java
+      dbms: PostgreSQL
+      tool: IntelliJ, Git
+      framework: Spring Boot
+      was: Tomcat
+      etc: Docker
 ```
 
 ### 날짜 형식
-
-날짜 필드는 자동으로 변환됩니다.
 
 | 입력 | 출력 |
 |---|---|
@@ -113,34 +124,37 @@ projects:
 
 ## 별칭 사전 (aliases.yaml)
 
-템플릿 라벨과 프로필 필드를 연결합니다. **공백은 자동으로 무시**하므로 `기 간`, `기      간`은 `기간`과 동일하게 처리됩니다.
+템플릿 라벨과 프로필 필드를 연결합니다.
 
-### 필드 추가
-
-```yaml
-basic.name:
-  - 성명
-  - 이름
-  - 지원자명
-```
+**공백은 자동으로 무시**됩니다. `기 간`, `기      간`, `기간`은 동일하게 처리됩니다.
 
 ### 오매핑 방지
-
-특정 라벨이 잘못 매핑되면 `_exclude`에 추가합니다.
 
 ```yaml
 _exclude:
   - 지원일자    # 특정 양식에서 basic.name으로 오매핑됨
 ```
 
+### 예시값 덮어쓰기
+
+템플릿에 예시 문구가 채워진 셀은 기본적으로 건드리지 않습니다.
+`yyyy.mm`, `0000-00-00`, `입력하세요` 같은 패턴은 자동으로 덮어씁니다.
+그 외 특정 예시값은 `_overwrite`에 추가합니다.
+
+```yaml
+_overwrite:
+  - 홍길동
+  - 000-0000-0000
+```
+
 ---
 
 ## DOC 파일 처리
 
-`.doc`(구 바이너리 형식)은 직접 지원하지 않습니다. LibreOffice로 변환 후 사용합니다.
+`.doc`(구 바이너리 형식)은 LibreOffice로 변환 후 사용합니다.
 
 ```bash
-soffice --headless --convert-to docx company.docx
+soffice --headless --convert-to docx company.doc
 ```
 
 ---
@@ -148,17 +162,17 @@ soffice --headless --convert-to docx company.docx
 ## 동작 원리
 
 ```
-profile.yaml  →  프로필 로딩 및 평탄화 (basic.name, projects.0.role 등 dotted-path 키)
-aliases.yaml  →  라벨 별칭 사전 + 오매핑 제외 목록
+profile.yaml  →  프로필 로딩 및 평탄화 (dotted-path 키)
+aliases.yaml  →  라벨 별칭 + 오매핑 제외 + 예시값 덮어쓰기 목록
                           ↓
-template.docx →  테이블 순회 → 라벨 매칭 (exact → alias → fuzzy)
+template.docx →  테이블 순회 → 관련성 필터(라벨 ≥ 2)
                           ↓
-              수평 테이블 / 수직 테이블 분기 처리
+              수평 / 수직 테이블 분기
                           ↓
-              output.docx (서식 보존, 빈 셀만 채움)
+              라벨 매칭 (exact → alias → fuzzy 75%)
+                          ↓
+              output.docx (서식 보존, 빈 셀 또는 예시값 셀만 채움)
 ```
-
-**매칭 우선순위**: 정확 일치 → 별칭 일치 → 퍼지 매칭 (rapidfuzz, 기본 75%)
 
 **지원 테이블 구조**
 
@@ -166,3 +180,21 @@ template.docx →  테이블 순회 → 라벨 매칭 (exact → alias → fuzzy
 |---|---|---|
 | 수직 (라벨\|값 인접) | 기본정보표 | basic, skills |
 | 수평 (헤더행 + 데이터행) | 프로젝트 목록, 경력 목록, 학력표 | projects, career, education, certifications |
+
+---
+
+## 자동화 한계
+
+회사마다 이력서 양식이 일관되지 않아 다음과 같은 한계가 발생합니다.
+
+**라벨 다양성**  
+같은 의미의 필드도 회사마다 표기가 달라 (`담당업무` / `수행업무` / `업무내용` 등) alias를 추가해도 처음 보는 표기가 계속 생깁니다.
+
+**테이블 구조 다양성**  
+기술스택, 프로젝트 목록, 경력사항처럼 자동화 가능한 항목도 테이블 구조가 예상과 다르면 매핑되지 않습니다. 단일 초대형 테이블, 비표준 병합 셀 구조 등이 해당합니다.
+
+**자동화 불가 항목**  
+자기소개서, 지원동기, 희망 연봉, 군별/계급, 추천인 등은 데이터 자체가 없거나 양식마다 맥락이 달라 자동화가 불가합니다.
+
+**실용적 운용 방식**  
+이 툴은 매번 동일하게 반복 입력하는 고정 항목(이름, 연락처, 기술스택, 프로젝트 목록 등)의 복붙 피로 제거를 목적으로 합니다. 나머지는 사람이 채우는 구조가 현실적입니다.

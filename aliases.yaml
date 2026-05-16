@@ -10,6 +10,10 @@ _exclude:
   - 지원일자       # resume_sample-8: basic.name에 85%로 오매핑
   - 상세경력사항    # resume_sample-8: basic.career_year에 80%로 오매핑
 
+# 예시 값으로 채워진 셀을 덮어쓸 텍스트 목록 (내장 패턴으로 처리 불가한 것만 추가)
+# 내장 패턴: yyyy.mm / 0000.00 형식, xxxx 형식, 입력/기재/작성/예) 포함 문구
+_overwrite: []
+
 # ── basic ─────────────────────────────────────────────────────────────────────
 
 basic.name:
@@ -32,6 +36,15 @@ basic.career_year:
   - 총경력
   - 경력기간
   - 총경력기간
+
+basic.available_date:
+  - 근무가능일자
+  - 투입가능일
+  - 투입가능일자
+
+basic.rrn:
+  - 주민등록번호
+  - 주민번호
 
 basic.email:
   - E-Mail
@@ -93,6 +106,10 @@ education.0.end:
   - 졸업년월
   - 과졸업        # "과 졸업" 자동 매칭
 
+education.0.location:
+  - 소재지
+  - 학교소재지
+
 # ── certifications ────────────────────────────────────────────────────────────
 
 certifications.0.name:
@@ -120,7 +137,6 @@ certifications.0.grade:
 career.0.company:
   - 회사명
   - 소속회사
-  - 근무회사
 
 career.0.department:
   - 부서명
@@ -191,6 +207,48 @@ projects.0.period.end:
   - 종료일
   - 완료일
   - 종료
+
+projects.0.client:
+  - 고객사
+  - 고객사(발주처)   # "고객사(발주처)" 자동 매칭
+  - 발주처
+  - 발주사
+
+projects.0.company:
+  - 근무회사
+  - 근무회사(소속)   # "근무회사(소속)" 자동 매칭
+
+projects.0.environment.os:
+  - O.S
+  - OS
+  - 운영체제
+
+projects.0.environment.language:
+  - Language
+  - 언어
+  - 개발언어
+
+projects.0.environment.dbms:
+  - DBMS
+  - DB
+
+projects.0.environment.tool:
+  - TOOL
+  - Tool
+  - 개발도구
+
+projects.0.environment.framework:
+  - Framework
+  - FrameWork
+
+projects.0.environment.was:
+  - WAS/통신MiddleWare   # "WAS/통신 MiddleWare" 자동 매칭
+  - WAS/통신Middleware
+  - WAS
+  - 미들웨어
+
+projects.0.environment.etc:
+  - 기타
 
 # ── projects (index 1) ────────────────────────────────────────────────────────
 

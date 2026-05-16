@@ -19,6 +19,9 @@ _IDENTIFYING_FIELDS = {
     "projects.0.name",
     "projects.0.role",
     "projects.0.description",
+    "projects.0.client",
+    "projects.0.company",
+    "projects.0.environment.os",
     "career.0.company",
     "career.0.duties",
     "career.0.period",
@@ -35,10 +38,12 @@ def fill_template(
     profile: dict,
     matcher: FieldMatcher,
     output_path: str | Path,
+    overwrite: set[str] | None = None,
 ) -> dict[str, int]:
     doc = Document(str(template_path))
     flat = flatten_profile(profile)
     stats = {"filled": 0, "skipped": 0}
+    ow = overwrite or set()
 
     for table in doc.tables:
         rows_cells = [[cell for cell in row.cells] for row in table.rows]
@@ -47,9 +52,9 @@ def fill_template(
         col_map = _build_col_map(rows_cells, matcher)
         if _is_horizontal_table(rows_cells, col_map):
             header_count = _count_header_rows(rows_cells)
-            _fill_horizontal(rows_cells[header_count:], col_map, flat, stats)
+            _fill_horizontal(rows_cells[header_count:], col_map, flat, stats, ow)
         else:
-            _fill_vertical(rows_cells, flat, matcher, stats)
+            _fill_vertical(rows_cells, flat, matcher, stats, ow)
 
     doc.save(str(output_path))
     return stats
@@ -82,6 +87,42 @@ def _unique_cells(cells: list[_Cell], seen: set) -> list[tuple[int, _Cell]]:
             seen.add(cid)
             result.append((c_idx, cell))
     return result
+
+
+# ── placeholder detection ─────────────────────────────────────────────────────
+
+_PLACEHOLDER_PATTERNS = [
+    re.compile(r'^y{2,4}[./년]m{1,2}([./월]d{1,2}일?)?$', re.IGNORECASE),  # yyyy.mm, yyyy.mm.dd
+    re.compile(r'^\d*0{3,}[-./]\d*0{2,}'),   # 0000-00, 0000.00 형식
+    re.compile(r'^x+[-x\s]+x+$', re.IGNORECASE),   # xxx-xxxx-xxxx
+    re.compile(r'입력(하세요|바랍니다|해주세요)?'),
+    re.compile(r'기재(하세요|바랍니다|해주세요)?'),
+    re.compile(r'작성(하세요|바랍니다|해주세요)?'),
+    re.compile(r'^예\s*\)'),
+]
+
+
+def is_placeholder(text: str, overwrite: set[str]) -> bool:
+    """Return True if the cell text is a known placeholder that should be overwritten."""
+    t = text.strip()
+    if not t:
+        return True
+    if t in overwrite:
+        return True
+    for pattern in _PLACEHOLDER_PATTERNS:
+        if pattern.search(t):
+            return True
+    return False
+
+
+def _row_is_fillable(cells: list[_Cell], overwrite: set[str], seen: set | None = None) -> bool:
+    """Return True if every unique cell is empty or a placeholder."""
+    if seen is None:
+        seen = set()
+    for _, cell in _unique_cells(cells, seen):
+        if not is_placeholder(cell.text, overwrite):
+            return False
+    return True
 
 
 def _row_is_empty(cells: list[_Cell], seen: set | None = None) -> bool:
@@ -137,7 +178,9 @@ def _fill_horizontal(
     col_map: dict[int, str],
     flat: dict[str, Any],
     stats: dict,
+    overwrite: set[str] | None = None,
 ) -> None:
+    ow = overwrite or set()
     section = _detect_section(col_map)
     if not section:
         return
@@ -147,7 +190,7 @@ def _fill_horizontal(
     for row_cells in data_rows:
         if entry_idx >= max_entries:
             break
-        if not _row_is_empty(row_cells):
+        if not _row_is_fillable(row_cells, ow):
             continue
 
         for c_idx, base_key in col_map.items():
@@ -213,7 +256,9 @@ def _fill_vertical(
     flat: dict[str, Any],
     matcher: FieldMatcher,
     stats: dict,
+    overwrite: set[str] | None = None,
 ) -> None:
+    ow = overwrite or set()
     visited: set[int] = set()
 
     for row_idx, cells in enumerate(rows_cells):
@@ -233,7 +278,7 @@ def _fill_vertical(
             if field_key is None:
                 continue
 
-            value_cell = _find_value_cell(rows_cells, row_idx, col_idx, visited, matcher)
+            value_cell = _find_value_cell(rows_cells, row_idx, col_idx, visited, matcher, ow)
             if value_cell is None:
                 stats["skipped"] += 1
                 continue
@@ -256,7 +301,9 @@ def _find_value_cell(
     col_idx: int,
     visited: set,
     matcher: FieldMatcher,
+    overwrite: set[str] | None = None,
 ) -> _Cell | None:
+    ow = overwrite or set()
     cells = rows_cells[row_idx]
     current_tc_id = id(cells[col_idx]._tc)
 
@@ -269,18 +316,20 @@ def _find_value_cell(
             continue
         candidate_text = candidate.text.strip()
         if candidate_text:
-            # Non-empty: stop scanning if it's a label; skip (don't overwrite) otherwise
             if matcher.match(_first_line(candidate_text)) is not None:
-                break
-            continue
-        return candidate  # Empty cell → use as value target
+                break  # It's a label — stop scanning
+            if is_placeholder(candidate_text, ow):
+                return candidate  # Placeholder — overwrite
+            continue  # Meaningful content — skip
+        return candidate  # Empty cell
 
-    # Fallback: cell directly below (only if it's empty)
+    # Fallback: cell directly below (empty or placeholder)
     if row_idx + 1 < len(rows_cells) and col_idx < len(rows_cells[row_idx + 1]):
         below = rows_cells[row_idx + 1][col_idx]
         bid = id(below._tc)
-        if bid not in visited and bid != current_tc_id and not below.text.strip():
-            return below
+        if bid not in visited and bid != current_tc_id:
+            if is_placeholder(below.text, ow):
+                return below
 
     return None
 
